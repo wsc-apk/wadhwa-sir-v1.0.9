@@ -1,40 +1,40 @@
 {
   "name": "wsc",
   "version": "0.0.1",
-  "author": "Wadhwa Sir",
-  "homepage": "https://wsc-apk.netlify.app",
   "private": true,
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
+    "watch": "ng build --watch --configuration development",
     "ionic:build": "ng build",
     "ionic:serve": "ng serve"
   },
   "dependencies": {
-    "@angular/common": "^17.3.0",
-    "@angular/core": "^17.3.0",
-    "@angular/forms": "^17.3.0",
-    "@angular/platform-browser": "^17.3.0",
-    "@angular/platform-browser-dynamic": "^17.3.0",
-    "@angular/router": "^17.3.0",
-    "@capacitor/android": "^5.7.0",
+    "@angular/animations": "^17.0.2",
+    "@angular/common": "^17.0.2",
+    "@angular/compiler": "^17.0.2",
+    "@angular/core": "^17.0.2",
+    "@angular/forms": "^17.0.2",
+    "@angular/platform-browser": "^17.0.2",
+    "@angular/platform-browser-dynamic": "^17.0.2",
+    "@angular/router": "^17.0.2",
     "@capacitor/app": "^5.0.6",
     "@capacitor/browser": "^5.0.7",
     "@capacitor/core": "^5.7.0",
     "@capacitor/splash-screen": "^5.0.6",
-    "@ionic/angular": "^7.8.0",
+    "@ionic/angular": "^7.5.0",
     "ionicons": "^7.2.1",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
-    "zone.js": "~0.14.0"
+    "zone.js": "~0.14.2"
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "^17.0.0",
     "@angular/cli": "^17.0.0",
-    "@angular/compiler": "^17.3.0",
-    "@angular/compiler-cli": "^17.3.0",
+    "@angular/compiler-cli": "^17.0.2",
     "@capacitor/cli": "^5.7.0",
-    "typescript": "~5.2.0"
+    "@ionic/angular-toolkit": "^9.0.0",
+    "typescript": "~5.2.2"
   }
 }
