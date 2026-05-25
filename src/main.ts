@@ -5,10 +5,21 @@ import { IonicRouteStrategy, provideIonicAngular } from '@ionic/angular/standalo
 import { routes } from './app/app.routes';
 import { AppComponent } from './app/app.component';
 
+import { App as CapacitorApp } from '@capacitor/app';
+
 bootstrapApplication(AppComponent, {
   providers: [
     { provide: RouteReuseStrategy, useClass: IonicRouteStrategy },
     provideIonicAngular(),
     provideRouter(routes, withPreloading(PreloadAllModules)),
   ],
+}).then(() => {
+  // Android back button - go back or exit app
+  CapacitorApp.addListener('backButton', ({ canGoBack }) => {
+    if (!canGoBack) {
+      CapacitorApp.exitApp();
+    } else {
+      window.history.back();
+    }
+  });
 });
