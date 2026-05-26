@@ -1,50 +1,20 @@
 name: Build Android APK
-
-on:
-  workflow_dispatch:
-
+on: workflow_dispatch
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm install --legacy-peer-deps
-
-      - name: Delete old android project
-        run: rm -rf android
-
-      - name: Add Android platform fresh
-        run: npx cap add android
-
-      - name: Generate icons and splash
-        run: npx @capacitor/assets generate --android
-
-      - name: Build web app
-        run: npm run build
-
-      - name: Setup Java 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-
-      - name: Sync Capacitor
-        run: npx cap sync android
-
-      - name: Build Debug APK
-        run: cd android && chmod +x gradlew && ./gradlew assembleDebug
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: wadhwa-sir-classroom-app
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20', cache: 'npm' }
+      - run: npm install --legacy-peer-deps
+      - run: rm -rf android
+      - run: npx cap add android
+      - run: npx @capacitor/assets generate --android
+      - run: npm run build
+      - uses: actions/setup-java@v4
+        with: { distribution: 'temurin', java-version: '17' }
+      - run: npx cap sync android
+      - run: cd android && chmod +x gradlew && ./gradlew assembleDebug
+      - uses: actions/upload-artifact@v4
+        with: { name: wadhwa-sir-classroom-app, path: android/app/build/outputs/apk/debug/app-debug.apk }
