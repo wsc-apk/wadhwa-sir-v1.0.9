@@ -13,13 +13,12 @@ jobs:
           node-version: '20'
           cache: 'npm'
       - run: npm install --legacy-peer-deps
-      - run: npm install -D @capacitor/assets --legacy-peer-deps
       - run: npx cap add android
       - run: mkdir -p android/app/src/main/assets
       - run: mkdir -p resources
       - run: cp assets/icon.png resources/icon.png
       - run: cp assets/splash.png resources/splash.png
-      - run: npx cap assets generate --android
+      - run: find android/app/src/main/res -type d -name "mipmap-*" -exec cp resources/icon.png {}/ic_launcher.png \; -exec cp resources/icon.png {}/ic_launcher_round.png \;
       - run: npx cap sync android
       - uses: actions/setup-java@v4
         with:
