@@ -2,14 +2,15 @@ import { CapacitorConfig } from '@capacitor/core';
 
 const config: CapacitorConfig = {
   appId: 'com.wadhwasir.classroom',
-  appName: 'Wadhwa Sir Classroom',
+  appName: 'WADHWA SIR CLASSROOM',
   webDir: 'www',
   backgroundColor: '#0a0f1c',
   server: {
     url: 'https://wsc-apk.netlify.app',
     cleartext: true,
     androidScheme: 'https',
-    allowNavigation: ['*']
+    allowNavigation: ['*'],
+    hostname: 'wsc-apk.netlify.app'
   },
   plugins: {
     SplashScreen: {
@@ -23,12 +24,17 @@ const config: CapacitorConfig = {
       style: 'DARK',
       backgroundColor: '#0a0f1c',
       overlaysWebView: false
+    },
+    CapacitorHttp: {
+      enabled: true
     }
   },
   android: {
     allowMixedContent: true,
     captureInput: true,
-    webContentsDebuggingEnabled: false
+    webContentsDebuggingEnabled: false,
+    backgroundColor: '#0a0f1c',
+    useLegacyBridge: false
   }
 };
 
