@@ -7,7 +7,7 @@ import { AppComponent } from './app/app.component';
 
 import { App as CapacitorApp } from '@capacitor/app';
 import { StatusBar } from '@capacitor/status-bar';
-import { SpeechSynthesis } from '@capgo/capacitor-speech-synthesis';
+import { TextToSpeech } from '@capacitor-community/text-to-speech';
 
 bootstrapApplication(AppComponent, {
   providers: [
@@ -27,40 +27,26 @@ bootstrapApplication(AppComponent, {
     }
   });
 
-  // --- 2026 FIX: Replace broken WebView speechSynthesis with native Android TTS ---
+  // 2026 FIX: native TTS for Android 7-16
   const nativeTTS = {
-    speaking: false,
-    speak: async (utterance: SpeechSynthesisUtterance) => {
-      try {
-        await SpeechSynthesis.stop();
-        nativeTTS.speaking = true;
-        await SpeechSynthesis.speak({
-          text: utterance.text,
-          language: utterance.lang || 'en-IN',
-          rate: Math.min(Math.max(utterance.rate || 1, 0.1), 2),
-          pitch: utterance.pitch || 1.0,
-          volume: utterance.volume || 1.0
-        });
-        nativeTTS.speaking = false;
-        if (utterance.onend) utterance.onend(new Event('end'));
-      } catch (e) {
-        nativeTTS.speaking = false;
-      }
+    speak: async (utterance: any) => {
+      await TextToSpeech.stop();
+      await TextToSpeech.speak({
+        text: utterance.text,
+        lang: utterance.lang || 'en-IN',
+        rate: utterance.rate || 1.0,
+        pitch: utterance.pitch || 1.0,
+        volume: 1.0,
+        category: 'ambient'
+      });
+      if (utterance.onend) utterance.onend(new Event('end'));
     },
-    cancel: () => SpeechSynthesis.stop(),
-    pause: () => {},
-    resume: () => {},
-    getVoices: () => []
+    cancel: () => TextToSpeech.stop()
   };
 
   (window as any).speechSynthesis = nativeTTS;
   (window as any).SpeechSynthesisUtterance = class {
-    text: string;
-    lang = 'en-IN';
-    rate = 1;
-    pitch = 1;
-    volume = 1;
-    onend: any = null;
-    constructor(text: string) { this.text = text; }
+    text: string; lang = 'en-IN'; rate = 1; pitch = 1; volume = 1; onend: any = null;
+    constructor(t: string) { this.text = t; }
   };
 });
