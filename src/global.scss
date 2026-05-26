@@ -1,33 +1,43 @@
-/*
- * App Global CSS
- * ----------------------------------------------------------------------------
- * Put style rules here that you want to apply globally. These styles are for
- * the entire app and not just one component.
- */
+/* ===== WADHWA SIR - ANDROID WEBVIEW FIX - COPY EVERYTHING BELOW ===== */
+html, body {
+  -webkit-text-size-adjust: 100% !important;
+  text-size-adjust: 100% !important;
+  -moz-text-size-adjust: 100% !important;
+  -ms-text-size-adjust: 100% !important;
+}
 
-/* Core CSS required for Ionic components to work properly */
-@import "@ionic/angular/css/core.css";
+/* Prevent "22 Years" and cards from breaking on Android */
+@media only screen and (max-width: 480px) {
+  /* Experience & Offline cards */
+  ion-card h1, 
+  ion-card .card-title,
+  div[style*="22 Years"],
+  div[style*="20,000"] {
+    font-size: 26px !important;
+    line-height: 1.1 !important;
+    white-space: nowrap !important;
+    overflow: visible !important;
+  }
 
-/* Basic CSS for apps built with Ionic */
-@import "@ionic/angular/css/normalize.css";
-@import "@ionic/angular/css/structure.css";
-@import "@ionic/angular/css/typography.css";
-@import "@ionic/angular/css/display.css";
+  /* Prof. name section */
+  h1, h2 {
+    font-size: clamp(24px, 6vw, 32px) !important;
+  }
 
-/* Optional CSS utils that can be commented out */
-@import "@ionic/angular/css/padding.css";
-@import "@ionic/angular/css/float-elements.css";
-@import "@ionic/angular/css/text-alignment.css";
-@import "@ionic/angular/css/text-transformation.css";
-@import "@ionic/angular/css/flex-utils.css";
+  /* Instagram handle - stop clipping */
+  a[href*="instagram"],
+  p:contains("@wadhwasirclassroom"),
+  div:contains("@wadhwasirclassroom") {
+    font-size: 12.5px !important;
+    line-height: 1.3 !important;
+    word-break: break-word !important;
+    white-space: normal !important;
+  }
 
-/**
- * Ionic Dark Mode
- * -----------------------------------------------------
- * For more info, please see:
- * https://ionicframework.com/docs/theming/dark-mode
- */
-
-/* @import "@ionic/angular/css/palettes/dark.always.css"; */
-/* @import "@ionic/angular/css/palettes/dark.class.css"; */
-/* @import "@ionic/angular/css/palettes/dark.system.css"; */
+  /* "M.Sc. Mathematics • Gold Medalist" - keep on 2 lines max */
+  .subtitle, .degree-text {
+    font-size: 15px !important;
+    line-height: 1.25 !important;
+  }
+}
+/* ===== END FIX - COPY EVERYTHING ABOVE ===== */
