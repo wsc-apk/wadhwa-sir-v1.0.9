@@ -13,7 +13,7 @@ jobs:
           node-version: '20'
           cache: 'npm'
       - run: npm install --legacy-peer-deps
-      - run: npm install -D @capacitor/assets
+      - run: npm install -D @capacitor/assets --legacy-peer-deps
       - run: npx cap add android
       - run: mkdir -p android/app/src/main/assets
       - run: mkdir -p resources
