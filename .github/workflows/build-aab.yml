@@ -34,7 +34,7 @@ jobs:
         run: npx cap sync android
 
       - name: Install Capacitor Assets
-        run: npm install @capacitor/assets --save-dev
+        run: npm install @capacitor/assets@3 --save-dev --legacy-peer-deps
 
       - name: Generate icons from your assets
         run: |
