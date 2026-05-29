@@ -27,20 +27,23 @@ jobs:
           distribution: temurin
           java-version: 17
 
+      - name: Install Android SDK 35 (required for 2026 Play Store)
+        run: |
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+
       - name: Add Android platform
         run: npx cap add android || true
 
       - name: Sync Capacitor
         run: npx cap sync android
 
-      - name: Update to Android API 35 (Google Play 2026 requirement)
+      - name: Update to Android API 35
         run: |
           sed -i "s/compileSdkVersion = [0-9]*/compileSdkVersion = 35/" android/variables.gradle
           sed -i "s/targetSdkVersion = [0-9]*/targetSdkVersion = 35/" android/variables.gradle
           sed -i "s/minSdkVersion = [0-9]*/minSdkVersion = 24/" android/variables.gradle
-          sed -i "s/buildToolsVersion = .*/buildToolsVersion = '35.0.0'/" android/variables.gradle || true
 
-      - name: Set custom app icon (exact copy, no padding)
+      - name: Set custom app icon
         run: |
           sudo apt-get update -qq && sudo apt-get install -y imagemagick > /dev/null
           rm -f android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
