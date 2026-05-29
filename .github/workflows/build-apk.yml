@@ -33,13 +33,18 @@ jobs:
       - name: Sync Capacitor
         run: npx cap sync android
 
+      - name: Update to Android API 35 (Google Play 2026 requirement)
+        run: |
+          sed -i "s/compileSdkVersion = [0-9]*/compileSdkVersion = 35/" android/variables.gradle
+          sed -i "s/targetSdkVersion = [0-9]*/targetSdkVersion = 35/" android/variables.gradle
+          sed -i "s/minSdkVersion = [0-9]*/minSdkVersion = 24/" android/variables.gradle
+          sed -i "s/buildToolsVersion = .*/buildToolsVersion = '35.0.0'/" android/variables.gradle || true
+
       - name: Set custom app icon (exact copy, no padding)
         run: |
           sudo apt-get update -qq && sudo apt-get install -y imagemagick > /dev/null
-          # Remove adaptive icons that add the circle padding
           rm -f android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
           rm -f android/app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml
-          # Copy your exact icon to all densities
           convert assets/icon.png -resize 48x48 android/app/src/main/res/mipmap-mdpi/ic_launcher.png
           convert assets/icon.png -resize 48x48 android/app/src/main/res/mipmap-mdpi/ic_launcher_round.png
           convert assets/icon.png -resize 48x48 android/app/src/main/res/mipmap-mdpi/ic_launcher_foreground.png
@@ -66,5 +71,5 @@ jobs:
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Wadhwa-Sir-Classroom-APK
+          name: Wadhwa-Sir-Classroom-APK-API35
           path: android/app/build/outputs/apk/release/app-release.apk
