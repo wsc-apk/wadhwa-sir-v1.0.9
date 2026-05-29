@@ -1,8 +1,5 @@
 name: Build Test APK
-
-on:
-  workflow_dispatch:
-
+on: { workflow_dispatch: {} }
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -10,8 +7,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: 20, cache: npm }
-      - name: Install dependencies
-        run: npm install --legacy-peer-deps
+      - run: npm install --legacy-peer-deps
       - run: npm run build
       - uses: actions/setup-java@v4
         with: { distribution: temurin, java-version: 21 }
@@ -19,36 +15,27 @@ jobs:
       - run: npx cap add android || true
       - run: npx cap sync android
 
-      - name: Android 15 status-bar fix (keeps TTS working)
+      - name: Android 15 header fix (correct insertion)
         run: |
           MAIN=$(find android/app/src/main/java -name MainActivity.java)
-          # add import
-          grep -q "WindowCompat" "$MAIN" || sed -i '1i import androidx.core.view.WindowCompat;' "$MAIN"
-          # add the one line after super.onCreate
-          sed -i '/super.onCreate(savedInstanceState);/a \    WindowCompat.setDecorFitsSystemWindows(getWindow(), true);' "$MAIN"
+          # add import AFTER package line, only once
+          if ! grep -q "WindowCompat" "$MAIN"; then
+            sed -i '/^package /a import androidx.core.view.WindowCompat;' "$MAIN"
+            sed -i '/super.onCreate(savedInstanceState);/a \    WindowCompat.setDecorFitsSystemWindows(getWindow(), true);' "$MAIN"
+          fi
 
-      - name: Force API 35
-        run: |
-          sed -i "s/compileSdkVersion = [0-9]*/compileSdkVersion = 35/" android/variables.gradle
-          sed -i "s/targetSdkVersion = [0-9]*/targetSdkVersion = 35/" android/variables.gradle
-          sed -i "s/minSdkVersion = [0-9]*/minSdkVersion = 24/" android/variables.gradle
-
-      - name: Upgrade Gradle
-        run: |
-          sed -i "s/gradle-[0-9.]*-all.zip/gradle-8.9-all.zip/" android/gradle/wrapper/gradle-wrapper.properties
-          sed -i "s/com.android.tools.build:gradle:[0-9.]*'/com.android.tools.build:gradle:8.7.3'/" android/build.gradle
-
-      - name: Install Android 35 SDK
-        run: |
+      - run: sed -i "s/compileSdkVersion = [0-9]*/compileSdkVersion = 35/" android/variables.gradle
+      - run: sed -i "s/targetSdkVersion = [0-9]*/targetSdkVersion = 35/" android/variables.gradle
+      - run: sed -i "s/minSdkVersion = [0-9]*/minSdkVersion = 24/" android/variables.gradle
+      - run: sed -i "s/gradle-[0-9.]*-all.zip/gradle-8.9-all.zip/" android/gradle/wrapper/gradle-wrapper.properties
+      - run: sed -i "s/com.android.tools.build:gradle:[0-9.]*'/com.android.tools.build:gradle:8.7.3'/" android/build.gradle
+      - run: |
           rm -rf $ANDROID_HOME/platforms/android-35
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "platforms;android-35" "build-tools;35.0.0"
-
-      - name: Set icon
-        run: |
+      - run: |
           sudo apt-get update -qq && sudo apt-get install -y imagemagick > /dev/null
           rm -f android/app/src/main/res/mipmap-anydpi-v26/*.xml
           for s in 48 72 96 144 192; do d=""; case $s in 48)d=mdpi;;72)d=hdpi;;96)d=xhdpi;;144)d=xxhdpi;;192)d=xxxhdpi;;esac; convert assets/icon.png -resize ${s}x${s} android/app/src/main/res/mipmap-${d}/ic_launcher.png; convert assets/icon.png -resize ${s}x${s} android/app/src/main/res/mipmap-${d}/ic_launcher_round.png; convert assets/icon.png -resize ${s}x${s} android/app/src/main/res/mipmap-${d}/ic_launcher_foreground.png; done
-
       - run: cp upload-keystore.jks android/app/upload-keystore.jks
       - working-directory: android
         run: ./gradlew assembleRelease -Pandroid.injected.signing.store.file=$GITHUB_WORKSPACE/android/app/upload-keystore.jks -Pandroid.injected.signing.store.password=Uhk@738_ghRU87@98dfs -Pandroid.injected.signing.key.alias=upload -Pandroid.injected.signing.key.password=Uhk@738_ghRU87@98dfs
