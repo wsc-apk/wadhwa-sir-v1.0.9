@@ -21,6 +21,12 @@ jobs:
       - name: Build Ionic web
         run: npm run build
 
+      - name: Fix Android 15 status bar overlap
+        run: |
+          sed -i 's/<meta name="viewport" content="/<meta name="viewport" content="viewport-fit=cover, /' www/index.html || true
+          echo 'body{padding-top:constant(safe-area-inset-top);padding-top:env(safe-area-inset-top)} header,.header,ion-header,.app-header,.top-bar{padding-top:env(safe-area-inset-top)!important;margin-top:8px!important}' > www/safe-area.css
+          sed -i 's|</head>|<link rel="stylesheet" href="safe-area.css"></head>|' www/index.html
+
       - name: Setup Java 21
         uses: actions/setup-java@v4
         with:
@@ -47,7 +53,7 @@ jobs:
           sed -i "s/targetSdkVersion = [0-9]*/targetSdkVersion = 35/" android/variables.gradle
           sed -i "s/minSdkVersion = [0-9]*/minSdkVersion = 24/" android/variables.gradle
 
-      - name: Install FIXED Android 35 platform (replace corrupted jar)
+      - name: Install FIXED Android 35 platform
         run: |
           rm -rf $ANDROID_HOME/platforms/android-35
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "platform-tools" "platforms;android-35" "build-tools;35.0.0"
