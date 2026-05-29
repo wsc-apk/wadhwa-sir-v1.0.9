@@ -15,10 +15,8 @@ jobs:
           node-version: 20
           cache: npm
 
-      - name: Install dependencies (Capacitor 5 pinned)
-        run: |
-          npm install --legacy-peer-deps
-          npm install @capacitor/status-bar@5.0.7 @capacitor-community/text-to-speech@5.0.1 --save-exact --legacy-peer-deps
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
 
       - name: Build Ionic web
         run: npm run build
@@ -29,7 +27,7 @@ jobs:
           distribution: temurin
           java-version: 21
 
-      - name: Setup Android SDK base
+      - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
       - name: Add Android platform
@@ -38,28 +36,29 @@ jobs:
       - name: Sync Capacitor
         run: npx cap sync android
 
-      - name: Configure for Netlify + StatusBar (API 35 fix)
+      - name: Opt-out of Android 15 edge-to-edge (May 2026 fix)
         run: |
-          echo '{"appId":"com.wadhwasir.classroom","appName":"Wadhwa Sir Classroom","webDir":"www","server":{"url":"https://wsc-apk.netlify.app","androidScheme":"https"},"plugins":{"StatusBar":{"overlaysWebView":false,"backgroundColor":"#0B0F1A"}}}' > capacitor.config.json
-          npx cap copy android
+          # This is the official 2025-2026 fix for header overlap on API 35
+          sed -i '/<style name="AppTheme.NoActionBar">/a \        <item name="android:windowOptOutEdgeToEdgeEnforcement">true</item>' android/app/src/main/res/values/styles.xml
+          sed -i '/<style name="AppTheme.NoActionBar">/a \        <item name="android:windowOptOutEdgeToEdgeEnforcement">true</item>' android/app/src/main/res/values-v27/styles.xml || true
 
-      - name: Upgrade Gradle + AGP for API 35
-        run: |
-          sed -i "s/gradle-[0-9.]*-all.zip/gradle-8.9-all.zip/" android/gradle/wrapper/gradle-wrapper.properties
-          sed -i "s/com.android.tools.build:gradle:[0-9.]*'/com.android.tools.build:gradle:8.7.3'/" android/build.gradle
-
-      - name: Force API 35 versions
+      - name: Force API 35
         run: |
           sed -i "s/compileSdkVersion = [0-9]*/compileSdkVersion = 35/" android/variables.gradle
           sed -i "s/targetSdkVersion = [0-9]*/targetSdkVersion = 35/" android/variables.gradle
           sed -i "s/minSdkVersion = [0-9]*/minSdkVersion = 24/" android/variables.gradle
 
-      - name: Install FIXED Android 35 platform
+      - name: Upgrade Gradle for API 35
+        run: |
+          sed -i "s/gradle-[0-9.]*-all.zip/gradle-8.9-all.zip/" android/gradle/wrapper/gradle-wrapper.properties
+          sed -i "s/com.android.tools.build:gradle:[0-9.]*'/com.android.tools.build:gradle:8.7.3'/" android/build.gradle
+
+      - name: Install Android 35
         run: |
           rm -rf $ANDROID_HOME/platforms/android-35
-          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "platforms;android-35" "build-tools;35.0.0"
 
-      - name: Set custom app icon
+      - name: Set icon
         run: |
           sudo apt-get update -qq && sudo apt-get install -y imagemagick > /dev/null
           rm -f android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
@@ -74,12 +73,12 @@ jobs:
       - name: Copy keystore
         run: cp upload-keystore.jks android/app/upload-keystore.jks
 
-      - name: Build signed APK
+      - name: Build APK
         working-directory: android
         run: ./gradlew assembleRelease -Pandroid.injected.signing.store.file=$GITHUB_WORKSPACE/android/app/upload-keystore.jks -Pandroid.injected.signing.store.password=Uhk@738_ghRU87@98dfs -Pandroid.injected.signing.key.alias=upload -Pandroid.injected.signing.key.password=Uhk@738_ghRU87@98dfs
 
-      - name: Upload APK artifact
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Wadhwa-Sir-Classroom-APK-WORKING
+          name: Wadhwa-Sir-Classroom-APK-FINAL
           path: android/app/build/outputs/apk/release/app-release.apk
