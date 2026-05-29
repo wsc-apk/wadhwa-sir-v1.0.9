@@ -8,11 +8,28 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 20, cache: npm }
       - run: npm install --legacy-peer-deps
+      - name: Upgrade Capacitor to v7 and add edge-to-edge plugins
+        run: |
+          npm install @capacitor/core@latest @capacitor/cli@latest @capacitor/android@latest @capacitor/status-bar@latest @capawesome/capacitor-android-edge-to-edge-support@latest --legacy-peer-deps
       - run: npm run build
       - uses: actions/setup-java@v4
         with: { distribution: temurin, java-version: 21 }
       - uses: android-actions/setup-android@v3
       - run: npx cap add android || true
+      - run: npx cap sync android
+      - name: Update Capacitor config for Android 15
+        run: |
+          node - <<'NODE'
+          const fs=require('fs');
+          let cfg={};
+          if(fs.existsSync('capacitor.config.json')) cfg=JSON.parse(fs.readFileSync('capacitor.config.json','utf8'));
+          cfg.android={...(cfg.android||{}), adjustMarginsForEdgeToEdge:'auto'};
+          cfg.plugins={...(cfg.plugins||{})};
+          cfg.plugins.EdgeToEdge={ backgroundColor:'#0b1220', statusBarColor:'#0b1220', navigationBarColor:'#0b1220' };
+          cfg.plugins.SystemBars={ insetsHandling:'disable' };
+          cfg.plugins.StatusBar={ overlaysWebView:false, backgroundColor:'#0b1220', style:'DARK' };
+          fs.writeFileSync('capacitor.config.json', JSON.stringify(cfg,null,2));
+          NODE
       - run: npx cap sync android
       - name: Android 15 header fix
         run: |
@@ -20,6 +37,12 @@ jobs:
           if ! grep -q "WindowCompat" "$MAIN"; then
             sed -i '/^package /a import androidx.core.view.WindowCompat;' "$MAIN"
             sed -i '/super.onCreate(savedInstanceState);/a \    WindowCompat.setDecorFitsSystemWindows(getWindow(), true);' "$MAIN"
+          fi
+      - name: Add Android 15 opt-out in styles
+        run: |
+          STYLE=android/app/src/main/res/values/styles.xml
+          if ! grep -q "windowOptOutEdgeToEdgeEnforcement" "$STYLE"; then
+            sed -i '/<style name="AppTheme.NoActionBar"/a \        <item name="android:windowOptOutEdgeToEdgeEnforcement">true</item>\n        <item name="android:statusBarColor">#0b1220</item>\n        <item name="android:navigationBarColor">#0b1220</item>\n        <item name="android:windowLightStatusBar">false</item>' "$STYLE"
           fi
       - run: sed -i "s/compileSdkVersion = [0-9]*/compileSdkVersion = 35/" android/variables.gradle
       - run: sed -i "s/targetSdkVersion = [0-9]*/targetSdkVersion = 35/" android/variables.gradle
@@ -29,6 +52,10 @@ jobs:
       - run: |
           rm -rf $ANDROID_HOME/platforms/android-35
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "platforms;android-35" "build-tools;35.0.0"
+      - name: Bump versionCode for Play Console
+        run: |
+          sed -i "s/versionCode [0-9]*/versionCode $GITHUB_RUN_NUMBER/" android/app/build.gradle
+          sed -i "s/versionName \"[^\"]*\"/versionName \"1.0.$GITHUB_RUN_NUMBER\"/" android/app/build.gradle
       - run: |
           sudo apt-get update -qq && sudo apt-get install -y imagemagick > /dev/null
           rm -f android/app/src/main/res/mipmap-anydpi-v26/*.xml
