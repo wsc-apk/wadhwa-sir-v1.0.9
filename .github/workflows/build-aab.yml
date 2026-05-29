@@ -33,6 +33,13 @@ jobs:
       - name: Sync Capacitor
         run: npx cap sync android
 
+      - name: Update to Android API 35 (Google Play 2026 requirement)
+        run: |
+          sed -i "s/compileSdkVersion = [0-9]*/compileSdkVersion = 35/" android/variables.gradle
+          sed -i "s/targetSdkVersion = [0-9]*/targetSdkVersion = 35/" android/variables.gradle
+          sed -i "s/minSdkVersion = [0-9]*/minSdkVersion = 24/" android/variables.gradle
+          sed -i "s/buildToolsVersion = .*/buildToolsVersion = '35.0.0'/" android/variables.gradle || true
+
       - name: Set custom app icon (exact copy, no padding)
         run: |
           sudo apt-get update -qq && sudo apt-get install -y imagemagick > /dev/null
@@ -64,5 +71,5 @@ jobs:
       - name: Upload AAB artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Wadhwa-Sir-Classroom-AAB
+          name: Wadhwa-Sir-Classroom-AAB-API35
           path: android/app/build/outputs/bundle/release/app-release.aab
