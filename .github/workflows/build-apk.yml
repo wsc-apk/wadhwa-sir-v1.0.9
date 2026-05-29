@@ -27,9 +27,10 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - name: Install Android SDK 35 (required for 2026 Play Store)
-        run: |
-          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+      - name: Setup Android SDK 35 (official)
+        uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools platforms;android-35 build-tools;35.0.0
 
       - name: Add Android platform
         run: npx cap add android || true
@@ -37,7 +38,7 @@ jobs:
       - name: Sync Capacitor
         run: npx cap sync android
 
-      - name: Update to Android API 35
+      - name: Force API 35 for Play Store 2026
         run: |
           sed -i "s/compileSdkVersion = [0-9]*/compileSdkVersion = 35/" android/variables.gradle
           sed -i "s/targetSdkVersion = [0-9]*/targetSdkVersion = 35/" android/variables.gradle
