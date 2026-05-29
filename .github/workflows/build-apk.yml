@@ -24,7 +24,7 @@ jobs:
       - name: Fix Android 15 status bar overlap
         run: |
           sed -i 's/<meta name="viewport" content="/<meta name="viewport" content="viewport-fit=cover, /' www/index.html || true
-          echo 'body{padding-top:constant(safe-area-inset-top);padding-top:env(safe-area-inset-top)} header,.header,ion-header,.app-header,.top-bar{padding-top:env(safe-area-inset-top)!important;margin-top:8px!important}' > www/safe-area.css
+          echo 'html,body{margin:0} body{padding-top:constant(safe-area-inset-top);padding-top:env(safe-area-inset-top)} header,.header,ion-header,.app-header,.top-bar,div:first-child>div:first-child{padding-top:env(safe-area-inset-top)!important;margin-top:12px!important}' > www/safe-area.css
           sed -i 's|</head>|<link rel="stylesheet" href="safe-area.css"></head>|' www/index.html
 
       - name: Setup Java 21
@@ -42,7 +42,13 @@ jobs:
       - name: Sync Capacitor
         run: npx cap sync android
 
-      - name: Upgrade Gradle + AGP for API 35 (May 2026 fix)
+      - name: Force app to use LOCAL files (not Netlify)
+        run: |
+          if [ -f capacitor.config.ts ]; then sed -i '/server/,/},/d' capacitor.config.ts; sed -i '/server/,/}/d' capacitor.config.ts; fi
+          if [ -f capacitor.config.json ]; then jq 'del(.server)' capacitor.config.json > tmp.json && mv tmp.json capacitor.config.json || true; fi
+          npx cap copy android
+
+      - name: Upgrade Gradle + AGP for API 35
         run: |
           sed -i "s/gradle-[0-9.]*-all.zip/gradle-8.9-all.zip/" android/gradle/wrapper/gradle-wrapper.properties
           sed -i "s/com.android.tools.build:gradle:[0-9.]*'/com.android.tools.build:gradle:8.7.3'/" android/build.gradle
@@ -80,5 +86,5 @@ jobs:
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Wadhwa-Sir-Classroom-APK-API35-FIXED
+          name: Wadhwa-Sir-Classroom-APK-FIXED-HEADER
           path: android/app/build/outputs/apk/release/app-release.apk
