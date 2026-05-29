@@ -15,10 +15,10 @@ jobs:
           node-version: 20
           cache: npm
 
-      - name: Install dependencies
+      - name: Install dependencies (Capacitor 5 pinned)
         run: |
           npm install --legacy-peer-deps
-          npm install @capacitor/status-bar --save
+          npm install @capacitor/status-bar@5.0.7 @capacitor-community/text-to-speech@5.0.1 --save-exact --legacy-peer-deps
 
       - name: Build Ionic web
         run: npm run build
@@ -40,7 +40,6 @@ jobs:
 
       - name: Configure for Netlify + StatusBar (API 35 fix)
         run: |
-          # create capacitor.config.json with remote URL and no overlay
           echo '{"appId":"com.wadhwasir.classroom","appName":"Wadhwa Sir Classroom","webDir":"www","server":{"url":"https://wsc-apk.netlify.app","androidScheme":"https"},"plugins":{"StatusBar":{"overlaysWebView":false,"backgroundColor":"#0B0F1A"}}}' > capacitor.config.json
           npx cap copy android
 
