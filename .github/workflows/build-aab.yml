@@ -16,16 +16,12 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        run: npm install --legacy-peer-deps
+        run: |
+          npm install --legacy-peer-deps
+          npm install @capacitor/status-bar --save
 
       - name: Build Ionic web
         run: npm run build
-
-      - name: Fix Android 15 status bar overlap
-        run: |
-          sed -i 's/<meta name="viewport" content="/<meta name="viewport" content="viewport-fit=cover, /' www/index.html || true
-          echo 'html,body{margin:0} body{padding-top:constant(safe-area-inset-top);padding-top:env(safe-area-inset-top)} header,.header,ion-header,.app-header,.top-bar,div:first-child>div:first-child{padding-top:env(safe-area-inset-top)!important;margin-top:12px!important}' > www/safe-area.css
-          sed -i 's|</head>|<link rel="stylesheet" href="safe-area.css"></head>|' www/index.html
 
       - name: Setup Java 21
         uses: actions/setup-java@v4
@@ -42,10 +38,9 @@ jobs:
       - name: Sync Capacitor
         run: npx cap sync android
 
-      - name: Force app to use LOCAL files (not Netlify)
+      - name: Configure for Netlify + StatusBar (API 35 fix)
         run: |
-          if [ -f capacitor.config.ts ]; then sed -i '/server/,/},/d' capacitor.config.ts; sed -i '/server/,/}/d' capacitor.config.ts; fi
-          if [ -f capacitor.config.json ]; then jq 'del(.server)' capacitor.config.json > tmp.json && mv tmp.json capacitor.config.json || true; fi
+          echo '{"appId":"com.wadhwasir.classroom","appName":"Wadhwa Sir Classroom","webDir":"www","server":{"url":"https://wsc-apk.netlify.app","androidScheme":"https"},"plugins":{"StatusBar":{"overlaysWebView":false,"backgroundColor":"#0B0F1A"}}}' > capacitor.config.json
           npx cap copy android
 
       - name: Upgrade Gradle + AGP for API 35
@@ -86,5 +81,5 @@ jobs:
       - name: Upload AAB artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Wadhwa-Sir-Classroom-AAB-FIXED-HEADER
+          name: Wadhwa-Sir-Classroom-AAB-WORKING
           path: android/app/build/outputs/bundle/release/app-release.aab
