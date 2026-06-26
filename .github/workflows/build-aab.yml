@@ -8,16 +8,16 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 22, cache: npm }
       - run: npm install --legacy-peer-deps
-      - name: Upgrade Capacitor to v7 and add edge-to-edge plugins
+      - name: Upgrade Capacitor and Add AdMob Plugin
         run: |
-          npm install @capacitor/core@latest @capacitor/cli@latest @capacitor/android@latest @capacitor/status-bar@latest @capawesome/capacitor-android-edge-to-edge-support@latest --legacy-peer-deps
+          npm install @capacitor/core@latest @capacitor/cli@latest @capacitor/android@latest @capacitor/status-bar@latest @capawesome/capacitor-android-edge-to-edge-support@latest @capacitor-community/admob@latest --legacy-peer-deps
       - run: npm run build
       - uses: actions/setup-java@v4
         with: { distribution: temurin, java-version: 21 }
       - uses: android-actions/setup-android@v3
       - run: npx cap add android || true
       - run: npx cap sync android
-      - name: Update Capacitor config for Android 15
+      - name: Configure Android 15 Edge-to-Edge, SDK 36/35, and AdMob ID
         run: |
           node - <<'NODE'
           const fs=require('fs');
@@ -26,42 +26,22 @@ jobs:
           cfg.android={...(cfg.android||{}), adjustMarginsForEdgeToEdge:'auto'};
           cfg.plugins={...(cfg.plugins||{})};
           cfg.plugins.EdgeToEdge={ backgroundColor:'#0b1220', statusBarColor:'#0b1220', navigationBarColor:'#0b1220' };
-          cfg.plugins.SystemBars={ insetsHandling:'disable' };
-          cfg.plugins.StatusBar={ overlaysWebView:false, backgroundColor:'#0b1220', style:'DARK' };
           fs.writeFileSync('capacitor.config.json', JSON.stringify(cfg,null,2));
           NODE
-      - run: npx cap sync android
-      - name: Android 15 header fix
+          sed -i "s/compileSdkVersion = [0-9]*/compileSdkVersion = 36/" android/variables.gradle || true
+          sed -i "s/targetSdkVersion = [0-9]*/targetSdkVersion = 35/" android/variables.gradle || true
+          sed -i '/<\/application>/i \        <meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" android:value="ca-app-pub-8576378038310405~4113931989"/>' android/app/src/main/AndroidManifest.xml
+      - name: Install SDK Platforms
+        run: sdkmanager --install "platforms;android-36" "build-tools;36.0.0" "platforms;android-35"
+      - name: Force version 1.0.9 for Play Console
         run: |
-          MAIN=$(find android/app/src/main/java -name MainActivity.java)
-          if ! grep -q "WindowCompat" "$MAIN"; then
-            sed -i '/^package /a import androidx.core.view.WindowCompat;' "$MAIN"
-            sed -i '/super.onCreate(savedInstanceState);/a \    WindowCompat.setDecorFitsSystemWindows(getWindow(), true);' "$MAIN"
-          fi
-      - name: Add Android 15 opt-out in styles
-        run: |
-          STYLE=android/app/src/main/res/values/styles.xml
-          if ! grep -q "windowOptOutEdgeToEdgeEnforcement" "$STYLE"; then
-            sed -i '/<style name="AppTheme.NoActionBar"/a \        <item name="android:windowOptOutEdgeToEdgeEnforcement">true</item>\n        <item name="android:statusBarColor">#0b1220</item>\n        <item name="android:navigationBarColor">#0b1220</item>\n        <item name="android:windowLightStatusBar">false</item>' "$STYLE"
-          fi
-      - run: sed -i "s/compileSdkVersion = [0-9]*/compileSdkVersion = 36/" android/variables.gradle
-      - run: sed -i "s/targetSdkVersion = [0-9]*/targetSdkVersion = 35/" android/variables.gradle
-      - run: sed -i "s/minSdkVersion = [0-9]*/minSdkVersion = 24/" android/variables.gradle
-      - run: sed -i "s/gradle-[0-9.]*-all.zip/gradle-8.13-all.zip/" android/gradle/wrapper/gradle-wrapper.properties
-      - run: sed -i "s/com.android.tools.build:gradle:[0-9.]*'/com.android.tools.build:gradle:8.11.1'/" android/build.gradle
-      - run: |
-          rm -rf $ANDROID_HOME/platforms/android-36
-          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "platforms;android-36" "build-tools;36.0.0" "platforms;android-35"
-      - name: Bump versionCode for Play Console
-        run: |
-          sed -i "s/versionCode [0-9]*/versionCode $GITHUB_RUN_NUMBER/" android/app/build.gradle
-          sed -i "s/versionName \"[^\"]*\"/versionName \"1.0.$GITHUB_RUN_NUMBER\"/" android/app/build.gradle
+          sed -i "s/versionCode [0-9]*/versionCode 9/" android/app/build.gradle
+          sed -i "s/versionName \"[^\"]*\"/versionName \"1.0.9\"/" android/app/build.gradle
       - run: |
           sudo apt-get update -qq && sudo apt-get install -y imagemagick > /dev/null
           rm -f android/app/src/main/res/mipmap-anydpi-v26/*.xml
           for s in 48 72 96 144 192; do d=""; case $s in 48)d=mdpi;;72)d=hdpi;;96)d=xhdpi;;144)d=xxhdpi;;192)d=xxxhdpi;;esac; convert assets/icon.png -resize ${s}x${s} android/app/src/main/res/mipmap-${d}/ic_launcher.png; convert assets/icon.png -resize ${s}x${s} android/app/src/main/res/mipmap-${d}/ic_launcher_round.png; convert assets/icon.png -resize ${s}x${s} android/app/src/main/res/mipmap-${d}/ic_launcher_foreground.png; done
-      - run: cp upload-keystore.jks android/app/upload-keystore.jks
-      - working-directory: android
-        run: ./gradlew bundleRelease -Pandroid.injected.signing.store.file=$GITHUB_WORKSPACE/android/app/upload-keystore.jks -Pandroid.injected.signing.store.password=Uhk@738_ghRU87@98dfs -Pandroid.injected.signing.key.alias=upload -Pandroid.injected.signing.key.password=Uhk@738_ghRU87@98dfs
+      - run: cp upload-keystore.jks android/app/upload-keystore.jks || true
+      - run: cd android && ./gradlew bundleRelease
       - uses: actions/upload-artifact@v4
-        with: { name: Wadhwa-Sir-AAB-FINAL, path: android/app/build/outputs/bundle/release/app-release.aab }
+        with: { name: app-aab, path: android/app/build/outputs/bundle/**/*.aab }
